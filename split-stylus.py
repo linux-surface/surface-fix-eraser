@@ -35,8 +35,7 @@ else:
 	sys.exit(-ENOENT)
 
 dev = InputDevice(args.device)
-pen = UInput.from_device(dev, name=dev.name + " Pen")
-eraser = UInput.from_device(dev, name=dev.name + " Eraser")
+virt = UInput.from_device(dev, name=dev.name + " Pen")
 
 # Staging for events where we don't know the target device yet.
 staged = list()
@@ -45,13 +44,6 @@ stageHasEraser = False
 
 # Whether the currently active tool is the eraser
 eraserActive = False
-
-# Relays the event to the currently active tool
-def writeEvent(event):
-	if eraserActive:
-		eraser.write_event(event)
-	else:
-		pen.write_event(event)
 
 def handleExit(s, f):
 	dev.ungrab()
@@ -63,7 +55,7 @@ dev.grab()
 signal(SIGINT, handleExit)
 
 for event in dev.read_loop():
-	
+
 	# If we encounter a BTN_TOOL_PEN down event, stage all following events
 	# until we can be sure that it is not part of a BTN_TOOL_RUBBER event
 	if event.code == BTN_TOOL_PEN:
@@ -80,7 +72,7 @@ for event in dev.read_loop():
 		continue
 
 	if event.code == BTN_TOOL_RUBBER:
-		# Since there is one final event, we have to capture 
+		# Since there is one final event, we have to capture
 		# one more event
 		if toStage == 1:
 			toStage = 2
@@ -93,12 +85,20 @@ for event in dev.read_loop():
 	if len(staged) > 0:
 		staged.append(event)
 	else:
-		writeEvent(event)
+		virt.write_event(event)
 
 	# If we have enough events staged, we can be sure that it is not a
 	# BTN_TOOL_RUBBER event, so we can continue with processing them.
 	if len(staged) <= toStage:
 		continue;
+
+	# If the tool changed, we have to flush the virtual input device.
+	if eraserActive != stageHasEraser:
+		virt.close()
+		name = dev.name + " Pen"
+		if stageHasEraser:
+			name = dev.name + " Eraser"
+		virt = UInput.from_device(dev, name=name)
 
 	# Choose the tool input device
 	eraserActive = stageHasEraser
@@ -113,7 +113,7 @@ for event in dev.read_loop():
 
 	# Forward all staged events and let libinput handle them
 	for e in staged:
-		writeEvent(e)
+		virt.write_event(e)
 
 	# Clear the staging queue, and reset the eraser flag
 	staged.clear()
