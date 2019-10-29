@@ -1,0 +1,9 @@
+[Unit]
+Description=linux-surface eraser fix
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/linux-surface-fix-eraser.py
+
+[Install]
+WantedBy=default.target

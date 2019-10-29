@@ -1,9 +1,0 @@
-[Unit]
-Description=Splitting stylus into seperate devices for pen and eraser
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/split-stylus.py
-
-[Install]
-WantedBy=default.target
