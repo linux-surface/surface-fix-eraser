@@ -11,6 +11,7 @@ from evdev.ecodes import BTN_TOOL_PEN, BTN_TOOL_RUBBER, EV_KEY
 from signal import signal, SIGINT
 
 # Automatically discover the device
+device = None
 for name in os.listdir('/dev/input'):
 	if not name.startswith('event'):
 		continue
@@ -26,7 +27,7 @@ for name in os.listdir('/dev/input'):
 	if BTN_TOOL_PEN in keys and BTN_TOOL_RUBBER in keys:
 		device = '/dev/input/' + name
 
-if device != None:
+if device is not None:
 	print('Found event: ' + device)
 else:
 	print('No event found! Exiting.')
